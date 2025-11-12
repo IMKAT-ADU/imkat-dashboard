@@ -21,3 +21,25 @@ model AccessCode {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model IFPMapping {
+  id              String            @id @default(cuid())
+  ifpKey          String            @unique
+  btName          String
+  costGroup       Boolean           @default(false)
+  locationMarkups LocationMarkup[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model LocationMarkup {
+  id         String      @id @default(cuid())
+  name       String
+  markup     Float
+  ifpMapping IFPMapping  @relation(fields: [mappingId], references: [id], onDelete: Cascade)
+  mappingId  String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@unique([mappingId, name])
+}

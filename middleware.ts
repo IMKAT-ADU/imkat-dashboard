@@ -15,21 +15,17 @@ export function middleware(request: NextRequest) {
 
   // Protected routes - dashboard and related
   if (pathname.startsWith('/dashboard') || pathname.startsWith('/api/protected')) {
-    console.log(`[Middleware] Protecting route: ${pathname}, Token present: ${!!token}`);
 
     if (!token) {
       // No token, redirect to login
-      console.log(`[Middleware] No token found for ${pathname}, redirecting to /`);
       return NextResponse.redirect(new URL('/', request.url));
     }
 
     // Verify token validity
     const isValid = verifyToken(token);
-    console.log(`[Middleware] Token validation for ${pathname}: ${isValid}`);
 
     if (!isValid) {
       // Invalid token, clear it and redirect to login
-      console.log(`[Middleware] Invalid token for ${pathname}, clearing and redirecting to /`);
       const response = NextResponse.redirect(new URL('/', request.url));
       response.cookies.set('token', '', {
         httpOnly: true,
@@ -40,7 +36,6 @@ export function middleware(request: NextRequest) {
       return response;
     }
 
-    console.log(`[Middleware] Token valid, allowing access to ${pathname}`);
   }
 
   return NextResponse.next();
