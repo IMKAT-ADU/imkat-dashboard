@@ -12,7 +12,11 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <NavCard title="IFP to BT Mapper" description="Settings to map IFP data to BT" route="/dashboard/ifp" />
+        <NavCard
+          title="Mapping Configuration"
+          description="Configure hierarchical mappings: Model → Exterior → Option → Cost Items"
+          route="/dashboard/mappings"
+        />
       </div>
     </div>
   );

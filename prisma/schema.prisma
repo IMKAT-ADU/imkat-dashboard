@@ -11,7 +11,7 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  // directUrl = env("DIRECT_URL")
 }
 
 model AccessCode {
@@ -22,24 +22,56 @@ model AccessCode {
   updatedAt DateTime @updatedAt
 }
 
-model IFPMapping {
-  id              String            @id @default(cuid())
-  ifpKey          String            @unique
-  btName          String
-  costGroup       Boolean           @default(false)
-  locationMarkups LocationMarkup[]
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+model Location {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  markup    Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-model LocationMarkup {
-  id         String      @id @default(cuid())
-  name       String
-  markup     Float
-  ifpMapping IFPMapping  @relation(fields: [mappingId], references: [id], onDelete: Cascade)
-  mappingId  String
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+model Model {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  exteriors   Exterior[]
+}
 
-  @@unique([mappingId, name])
+model Exterior {
+  id        String   @id @default(cuid())
+  name      String
+  modelId   String
+  model     Model    @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  options   Option[]
+
+  @@unique([modelId, name])
+}
+
+model Option {
+  id         String     @id @default(cuid())
+  name       String
+  exteriorId String
+  exterior   Exterior   @relation(fields: [exteriorId], references: [id], onDelete: Cascade)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  costItems  CostItem[]
+
+  @@unique([exteriorId, name])
+}
+
+model CostItem {
+  id        String   @id @default(cuid())
+  btName    String
+  costGroup Boolean  @default(false)
+  isDefault Boolean  @default(false)
+  optionId  String
+  option    Option   @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([optionId, btName])
 }
