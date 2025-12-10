@@ -126,10 +126,6 @@ export function LoginForm() {
             )}
           </Button>
         </form>
-
-        <p className="text-xs text-center text-muted-foreground">
-          For testing, use code: <span className="font-mono font-semibold">1111</span>
-        </p>
       </div>
     </div>
   );
