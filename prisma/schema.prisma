@@ -40,13 +40,14 @@ model Model {
 }
 
 model Exterior {
-  id        String   @id @default(cuid())
-  name      String
-  modelId   String
-  model     Model    @relation(fields: [modelId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  options   Option[]
+  id                 String              @id @default(cuid())
+  name               String
+  modelId            String
+  model              Model               @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  options            Option[]
+  exteriorCostItems  ExteriorCostItem[]
 
   @@unique([modelId, name])
 }
@@ -74,4 +75,17 @@ model CostItem {
   updatedAt DateTime @updatedAt
 
   @@unique([optionId, btName])
+}
+
+model ExteriorCostItem {
+  id         String   @id @default(cuid())
+  btName     String
+  costGroup  Boolean  @default(false)
+  isDefault  Boolean  @default(false)
+  exteriorId String
+  exterior   Exterior @relation(fields: [exteriorId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([exteriorId, btName])
 }

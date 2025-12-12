@@ -21,6 +21,8 @@ import {
   OptionFormData,
   CostItem,
   CostItemFormData,
+  ExteriorCostItem,
+  ExteriorCostItemFormData,
 } from '@/lib/types';
 
 // Import all our components
@@ -32,8 +34,10 @@ import { OptionForm } from '@/components/option-form';
 import { OptionList } from '@/components/option-list';
 import { CostItemForm } from '@/components/cost-item-form';
 import { CostItemList } from '@/components/cost-item-list';
+import { ExteriorCostItemForm } from '@/components/exterior-cost-item-form';
+import { ExteriorCostItemList } from '@/components/exterior-cost-item-list';
 
-type ViewLevel = 'models' | 'exteriors' | 'options' | 'costItems';
+type ViewLevel = 'models' | 'exteriors' | 'options' | 'costItems' | 'exteriorCostItems';
 
 export default function MappingsPage() {
   const [currentView, setCurrentView] = useState<ViewLevel>('models');
@@ -45,10 +49,11 @@ export default function MappingsPage() {
   const [exteriors, setExteriors] = useState<Exterior[]>([]);
   const [options, setOptions] = useState<Option[]>([]);
   const [costItems, setCostItems] = useState<CostItem[]>([]);
+  const [exteriorCostItems, setExteriorCostItems] = useState<ExteriorCostItem[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [dialogType, setDialogType] = useState<'model' | 'exterior' | 'option' | 'costItem'>(
+  const [dialogType, setDialogType] = useState<'model' | 'exterior' | 'option' | 'costItem' | 'exteriorCostItem'>(
     'model'
   );
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -75,7 +80,7 @@ export default function MappingsPage() {
     setIsLoading(true);
     setError('');
     try {
-      const response = await fetch(`/api/exteriors?modelId=${modelId}&includeOptions=true`);
+      const response = await fetch(`/api/exteriors?modelId=${modelId}&includeOptions=true&includeExteriorCostItems=true`);
       if (!response.ok) throw new Error('Failed to fetch exteriors');
       const data = await response.json();
       setExteriors(data);
@@ -118,6 +123,22 @@ export default function MappingsPage() {
     }
   }, []);
 
+  // Fetch exterior cost items for an exterior
+  const fetchExteriorCostItems = useCallback(async (exteriorId: string) => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const response = await fetch(`/api/exterior-cost-items?exteriorId=${exteriorId}`);
+      if (!response.ok) throw new Error('Failed to fetch exterior cost items');
+      const data = await response.json();
+      setExteriorCostItems(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   // Initial load
   useEffect(() => {
     fetchModels();
@@ -153,11 +174,21 @@ export default function MappingsPage() {
     fetchCostItems(option.id);
   };
 
+  const navigateToExteriorCostItems = (exterior: Exterior) => {
+    setSelectedExterior(exterior);
+    setCurrentView('exteriorCostItems');
+    fetchExteriorCostItems(exterior.id);
+  };
+
   const goBack = () => {
     if (currentView === 'costItems') {
       setCurrentView('options');
       setSelectedOption(null);
       if (selectedExterior) fetchOptions(selectedExterior.id);
+    } else if (currentView === 'exteriorCostItems') {
+      setCurrentView('exteriors');
+      setSelectedExterior(null);
+      if (selectedModel) fetchExteriors(selectedModel.id);
     } else if (currentView === 'options') {
       setCurrentView('exteriors');
       setSelectedExterior(null);
@@ -169,7 +200,7 @@ export default function MappingsPage() {
 
   // Dialog handlers
   const openDialog = (
-    type: 'model' | 'exterior' | 'option' | 'costItem',
+    type: 'model' | 'exterior' | 'option' | 'costItem' | 'exteriorCostItem',
     editItem?: any
   ) => {
     setDialogType(type);
@@ -338,6 +369,45 @@ export default function MappingsPage() {
     }
   };
 
+  // CRUD handlers for Exterior Cost Items
+  const handleSubmitExteriorCostItem = async (data: ExteriorCostItemFormData) => {
+    try {
+      if (editingItem) {
+        const response = await fetch(`/api/exterior-cost-items/${editingItem.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ btName: data.btName, costGroup: data.costGroup, isDefault: data.isDefault }),
+        });
+        if (!response.ok) throw new Error('Failed to update exterior cost item');
+        if (selectedExterior) await fetchExteriorCostItems(selectedExterior.id);
+      } else {
+        const response = await fetch('/api/exterior-cost-items', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to create exterior cost item');
+        }
+        if (selectedExterior) await fetchExteriorCostItems(selectedExterior.id);
+      }
+      closeDialog();
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const handleDeleteExteriorCostItem = async (id: string) => {
+    try {
+      const response = await fetch(`/api/exterior-cost-items/${id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete exterior cost item');
+      if (selectedExterior) await fetchExteriorCostItems(selectedExterior.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    }
+  };
+
   // Breadcrumb component
   const Breadcrumb = () => (
     <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
@@ -452,6 +522,7 @@ export default function MappingsPage() {
             onEdit={(exterior) => openDialog('exterior', exterior)}
             onDelete={handleDeleteExterior}
             onSelect={navigateToOptions}
+            onManageCosts={navigateToExteriorCostItems}
             isLoading={isLoading}
           />
         </>
@@ -512,6 +583,33 @@ export default function MappingsPage() {
         </>
       )}
 
+      {/* Exterior Cost Items View */}
+      {currentView === 'exteriorCostItems' && selectedExterior && (
+        <>
+          <div className="flex items-center gap-4">
+            <Button variant="outline" size="sm" onClick={goBack}>
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+            <div className="flex-1 flex justify-between items-center">
+              <h2 className="text-2xl font-bold tracking-tight">
+                Cost Items for {selectedExterior.name}
+              </h2>
+              <Button onClick={() => openDialog('exteriorCostItem')}>
+                <Plus className="h-4 w-4" />
+                Add Cost Item
+              </Button>
+            </div>
+          </div>
+          <ExteriorCostItemList
+            exteriorCostItems={exteriorCostItems}
+            onEdit={(exteriorCostItem) => openDialog('exteriorCostItem', exteriorCostItem)}
+            onDelete={handleDeleteExteriorCostItem}
+            isLoading={isLoading}
+          />
+        </>
+      )}
+
       {/* Dialog for Create/Edit */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl">
@@ -522,11 +620,12 @@ export default function MappingsPage() {
               {dialogType === 'exterior' && 'Exterior'}
               {dialogType === 'option' && 'Option'}
               {dialogType === 'costItem' && 'Cost Item'}
+              {dialogType === 'exteriorCostItem' && 'Exterior Cost Item'}
             </DialogTitle>
             <DialogDescription>
               {editingItem
-                ? `Update the ${dialogType}`
-                : `Add a new ${dialogType} to the hierarchy`}
+                ? `Update the ${dialogType === 'exteriorCostItem' ? 'exterior cost item' : dialogType}`
+                : `Add a new ${dialogType === 'exteriorCostItem' ? 'exterior cost item' : dialogType} to the hierarchy`}
             </DialogDescription>
           </DialogHeader>
 
@@ -564,6 +663,16 @@ export default function MappingsPage() {
               initialData={editingItem}
               optionId={selectedOption.id}
               onSubmit={handleSubmitCostItem}
+              onCancel={closeDialog}
+              isLoading={isLoading}
+            />
+          )}
+
+          {dialogType === 'exteriorCostItem' && selectedExterior && (
+            <ExteriorCostItemForm
+              initialData={editingItem}
+              exteriorId={selectedExterior.id}
+              onSubmit={handleSubmitExteriorCostItem}
               onCancel={closeDialog}
               isLoading={isLoading}
             />

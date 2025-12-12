@@ -11,6 +11,7 @@ interface ExteriorListProps {
   onEdit: (exterior: Exterior) => void;
   onDelete: (id: string) => void;
   onSelect: (exterior: Exterior) => void;
+  onManageCosts?: (exterior: Exterior) => void;
   isLoading?: boolean;
 }
 
@@ -19,6 +20,7 @@ export function ExteriorList({
   onEdit,
   onDelete,
   onSelect,
+  onManageCosts,
   isLoading,
 }: ExteriorListProps) {
   if (isLoading) {
@@ -51,40 +53,57 @@ export function ExteriorList({
             <div className="flex items-start justify-between">
               <CardTitle className="text-lg">{exterior.name}</CardTitle>
             </div>
-            <div className="mt-2">
+            <div className="mt-2 flex gap-2">
               <Badge variant="secondary">{exterior?.options?.length || 0} Option(s)</Badge>
+              <Badge variant="outline">{exterior?.exteriorCostItems?.length || 0} Cost Item(s)</Badge>
             </div>
 
           </CardHeader>
           <CardContent>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1"
-                onClick={() => onSelect(exterior)}
-              >
-                View Options
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => onEdit(exterior)}>
-                <Pencil className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (
-                    confirm(
-                      `Are you sure you want to delete "${exterior.name}"? This will also delete all associated options and cost items.`
-                    )
-                  ) {
-                    onDelete(exterior.id);
-                  }
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => onSelect(exterior)}
+                >
+                  View Options
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+                {onManageCosts && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => onManageCosts(exterior)}
+                  >
+                    Manage Costs
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="flex-1" onClick={() => onEdit(exterior)}>
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => {
+                    if (
+                      confirm(
+                        `Are you sure you want to delete "${exterior.name}"? This will also delete all associated options and cost items.`
+                      )
+                    ) {
+                      onDelete(exterior.id);
+                    }
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

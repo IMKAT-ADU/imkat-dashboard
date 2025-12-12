@@ -9,23 +9,25 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const modelId = searchParams.get('modelId');
     const includeOptions = searchParams.get('includeOptions') === 'true';
+    const includeExteriorCostItems = searchParams.get('includeExteriorCostItems') === 'true';
 
     const where = modelId ? { modelId } : {};
 
     const exteriors = await prisma.exterior.findMany({
       where,
-      include: includeOptions
-        ? {
-            model: true,
-            options: {
-              include: {
-                costItems: true,
-              },
+      include: {
+        model: true,
+        ...(includeOptions && {
+          options: {
+            include: {
+              costItems: true,
             },
-          }
-        : {
-            model: true,
           },
+        }),
+        ...(includeExteriorCostItems && {
+          exteriorCostItems: true,
+        }),
+      },
       orderBy: {
         name: 'asc',
       },

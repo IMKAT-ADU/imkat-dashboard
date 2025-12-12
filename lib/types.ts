@@ -30,6 +30,7 @@ export interface Exterior {
   updatedAt: string;
   model?: Model;
   options?: Option[];
+  exteriorCostItems?: ExteriorCostItem[];
 }
 
 export interface ExteriorFormData {
@@ -70,4 +71,23 @@ export interface CostItemFormData {
   costGroup: boolean;
   isDefault: boolean;
   optionId: string;
+}
+
+// ExteriorCostItem types
+export interface ExteriorCostItem {
+  id: string;
+  btName: string;
+  costGroup: boolean;
+  isDefault: boolean;
+  exteriorId: string;
+  createdAt: string;
+  updatedAt: string;
+  exterior?: Exterior;
+}
+
+export interface ExteriorCostItemFormData {
+  btName: string;
+  costGroup: boolean;
+  isDefault: boolean;
+  exteriorId: string;
 }
