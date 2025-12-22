@@ -57,7 +57,7 @@ export function ModelForm({ initialData, onSubmit, onCancel, isLoading }: ModelF
           placeholder="e.g., C1 Model 1188 Sq Ft"
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          disabled={isLoading || isSubmitting || !!initialData}
+          disabled={isLoading || isSubmitting}
           required
         />
       </div>
